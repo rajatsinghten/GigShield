@@ -102,6 +102,79 @@ weekly_premium = base_premium × zone_risk_multiplier × weather_risk_factor
 
 *\*Admin endpoints are open in Phase 1 — role-based access control is planned for Phase 2.*
 
+---
+ 
+## AI & ML Features
+ 
+GigShield goes beyond static parametric rules by embedding machine learning at every layer — from risk pricing to payout prediction to real-time urban intelligence.
+ 
+---
+ 
+### 1. City Nervous System — Real-Time Urban Intelligence
+ 
+Instead of relying solely on weather APIs, GigShield plugs into a broader network of urban data streams that no existing insurer monitors. A continuously updated **City Risk Score** (0–100) is computed per zone every 6 hours by aggregating signals from multiple sources:
+ 
+| Data Source | Signal | Trigger Logic |
+|---|---|---|
+| **Transit disruption feeds** | BMTC/Metro strike or route suspension | When Bangalore transit is down, workers cannot reach their bikes — auto-trigger for affected zones |
+| **Google Maps "busy" data** | Petrol pump queue length | Unusually long queues signal a fuel shortage event that grounds two-wheelers — auto-trigger with a 2-hour validation window |
+| **Hospital admission spikes** | Dengue, heatwave, or epidemic data | A statistically significant spike in admissions for a city area triggers illness-based income protection without requiring a medical claim |
+| **Police permit / rally data** | Protest routing and road closures | If a 2 km radius around a worker's active zone is blocked by a permitted political rally, GPS cross-validation confirms disruption and auto-triggers the claim |
+ 
+**ML Model:** A gradient boosting classifier (XGBoost) is trained on historical disruption-to-income-loss correlation data per city. Incoming urban signals are scored against this model in real time, and only signals with a disruption probability above a configurable threshold (default: 0.75) proceed to claim creation. This eliminates false positives from minor inconveniences while catching genuine income-blocking events.
+ 
+```
+urban_signals → feature_vector → XGBoost disruption_classifier
+                                        │
+                              disruption_probability > 0.75?
+                                    ↓ yes
+                         GPS validate worker in affected zone?
+                                    ↓ yes
+                              auto-create claim
+```
+ 
+**Why this matters:** Weather is only one of five major income disruption categories for Indian gig workers. City Nervous System coverage means GigShield is the only insurer that protects workers from the full spectrum of urban disruptions — including ones workers themselves cannot predict or report.
+ 
+---
+ 
+### 2. AI Rating Sentinel — Algorithmic Deactivation Insurance
+ 
+Platform algorithms have effectively become the employer for India's delivery workers. A single bad rating cycle — whether caused by a system bug, a targeted complaint campaign, or an opaque algorithmic penalty — can slash a worker's income by 40% overnight with no explanation and no recourse. Zero insurers cover this risk today.
+ 
+**GigShield's AI Rating Sentinel** monitors each worker's platform rating trajectory and detects drops that are statistically inconsistent with legitimate complaint patterns:
+ 
+**How it works:**
+ 
+1. **LSTM Trajectory Model** — a Long Short-Term Memory model is trained on each worker's historical rating time series, capturing their normal rating volatility, complaint frequency, and seasonal patterns.
+ 
+2. **Anomaly Detection** — when an observed rating drop deviates significantly from the LSTM's predicted trajectory (e.g., 4.8 → 3.1 within 48 hours with no corresponding increase in complaints), the drop is flagged as a potential algorithmic event rather than a merit-based one.
+ 
+3. **Algorithmic Disruption Payment** — upon flagging, GigShield auto-triggers an `algorithmic_disruption` claim type and processes a partial income protection payout covering the earnings gap during the anomaly window.
+ 
+4. **Legal-Grade Evidence Report** — the system auto-generates a timestamped report containing the rating trajectory graph, statistical deviation scores, complaint-to-rating correlation analysis, and platform interaction logs. Workers can use this report to formally appeal deactivation with Zomato/Swiggy or with the gig worker dispute resolution bodies established under India's Platform Aggregators policy framework.
+ 
+```
+worker_rating_history → LSTM trajectory model
+                               │
+                     predicted_rating ± confidence_band
+                               │
+              actual_rating < lower_confidence_bound?
+                         ↓ yes
+              complaint_volume_spike detected?
+                         ↓ no
+         flag as ALGORITHMIC_DISRUPTION_EVENT
+                         │
+         ┌───────────────┴───────────────┐
+         ▼                               ▼
+   auto-trigger claim          generate legal evidence
+   income_protection           report (PDF) for worker
+   payout (50% coverage)       appeal package
+```
+ 
+**Claim type added to schema:** `algorithmic_disruption` alongside existing `income_loss`.
+ 
+**Why this matters:** This makes GigShield the only insurance product in the world that protects gig workers *from the platforms themselves* — addressing the single biggest uninsured risk in the gig economy.
+ 
 
 ###  Phase 1 — Seed (Weeks 1-2) *← Current*
 - Complete API scaffold with all endpoints
