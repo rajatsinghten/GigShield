@@ -5,6 +5,7 @@ import type {
   Claim,
   EventTriggerPayload,
   EventTriggerResponse,
+  ManualClaimPayload,
   Payout,
   Policy,
   PolicyCreatePayload,
@@ -113,6 +114,12 @@ export const apiClient = {
       auth: true,
     }),
   getClaims: () => request<Claim[]>('/api/v1/claims/me', { auth: true }),
+  manualClaimMoney: (payload: ManualClaimPayload) =>
+    request<Claim>('/api/v1/claims/me/manual', {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify(payload),
+    }),
   getClaimById: (claimId: string) => request<Claim>(`/api/v1/claims/${claimId}`, { auth: true }),
   getPayouts: () => request<Payout[]>('/api/v1/payouts/me', { auth: true }),
   processPayout: (claimId: string) =>

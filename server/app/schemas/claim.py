@@ -29,6 +29,17 @@ class EventTrigger(BaseModel):
     timestamp: datetime = Field(..., description="When the event occurred")
 
 
+class ManualClaimCreate(BaseModel):
+    """Payload for temporary manual claim creation by worker."""
+
+    severity: str = Field(
+        ...,
+        pattern=r"^(low|medium|high|critical)$",
+        examples=["high"],
+        description="Selected severity used to compute payout ratio",
+    )
+
+
 class ClaimResponse(BaseModel):
     """Claim detail returned by the API."""
 

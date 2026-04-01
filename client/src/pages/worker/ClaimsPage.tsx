@@ -9,13 +9,24 @@ import { LoadingSkeleton } from '../../components/state/LoadingSkeleton'
 import { RetryPanel } from '../../components/state/RetryPanel'
 import { PaginationControls } from '../../components/common/PaginationControls'
 import { ROUTES } from '../../app/routes'
+import { SelectField } from '../../components/forms/SelectField'
 
 const PAGE_SIZE = 6
+const MANUAL_CLAIM_SEVERITY_OPTIONS = [
+  { label: 'Low (25% payout)', value: 'low' },
+  { label: 'Medium (50% payout)', value: 'medium' },
+  { label: 'High (75% payout)', value: 'high' },
+  { label: 'Critical (100% payout)', value: 'critical' },
+] as const
+
+type ClaimSeverity = 'low' | 'medium' | 'high' | 'critical'
 
 export function ClaimsPage() {
   const navigate = useNavigate()
   const [claims, setClaims] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
+  const [claiming, setClaiming] = useState(false)
+  const [manualSeverity, setManualSeverity] = useState<ClaimSeverity>('high')
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
 
@@ -35,6 +46,20 @@ export function ClaimsPage() {
     void load()
   }, [])
 
+  const handleManualClaim = async () => {
+    setClaiming(true)
+    setError('')
+    try {
+      await apiClient.manualClaimMoney({ severity: manualSeverity })
+      setPage(1)
+      await load()
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Unable to submit claim right now')
+    } finally {
+      setClaiming(false)
+    }
+  }
+
   const paginatedClaims = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE
     return claims.slice(start, start + PAGE_SIZE)
@@ -42,6 +67,24 @@ export function ClaimsPage() {
 
   return (
     <AppShell mode="worker" title="Claims" subtitle="Track event-triggered claims and statuses.">
+      <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <SelectField
+            label="Manual Claim Severity (Temporary)"
+            value={manualSeverity}
+            onChange={(value) => setManualSeverity(value as ClaimSeverity)}
+            options={MANUAL_CLAIM_SEVERITY_OPTIONS.map((option) => ({ label: option.label, value: option.value }))}
+          />
+          <button
+            type="button"
+            onClick={() => void handleManualClaim()}
+            disabled={claiming || loading}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {claiming ? 'Submitting...' : 'Claim Money (Temporary)'}
+          </button>
+        </div>
+      </div>
       {loading && <LoadingSkeleton lines={5} />}
       {!loading && error && <RetryPanel title="Unable to load claims" message={error} onRetry={() => void load()} />}
       {!loading && !error && claims.length === 0 && (

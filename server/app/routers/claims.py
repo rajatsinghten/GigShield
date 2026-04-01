@@ -1,22 +1,94 @@
-"""Claims router — view auto-generated parametric insurance claims.
+"""Claims router.
 
-Claims are NOT manually filed by workers; they are created by the event
-engine when a parametric trigger fires.  This router only provides read
-access for workers to check their claim status.
+Primary flow is event-triggered claim creation. A temporary manual claim
+endpoint is also exposed until full automation is finalized.
 """
 
 import uuid as _uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.claim import Claim
+from app.models.payout import Payout
+from app.models.policy import Policy
 from app.models.worker import Worker
-from app.schemas.claim import ClaimResponse
+from app.schemas.claim import ClaimResponse, ManualClaimCreate
+from app.services.payout_engine import compute_payout_amount
 from app.utils.deps import get_current_worker, get_db
 
 router = APIRouter(prefix="/api/v1/claims", tags=["Claims"])
+
+
+@router.post(
+    "/me/manual",
+    response_model=ClaimResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Temporarily create a manual claim for the logged-in worker",
+)
+async def create_manual_claim(
+    payload: ManualClaimCreate,
+    db: AsyncSession = Depends(get_db),
+    current_worker: Worker = Depends(get_current_worker),
+) -> Claim:
+    """Create a temporary manual claim and auto-approve it.
+
+    NOTE: This endpoint is a temporary fallback while event-driven claim
+    automation is being finalized.
+    """
+    policy_result = await db.execute(
+        select(Policy)
+        .where(
+            Policy.worker_id == current_worker.id,
+            Policy.status == "active",
+        )
+        .order_by(Policy.created_at.desc())
+    )
+    active_policy = policy_result.scalars().first()
+
+    if active_policy is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active policy found. Buy a policy before claiming.",
+        )
+
+    payout_amount = compute_payout_amount(
+        coverage_amount_inr=active_policy.coverage_amount_inr,
+        severity=payload.severity,
+    )
+
+    claim = Claim(
+        worker_id=current_worker.id,
+        policy_id=active_policy.id,
+        claim_type="income_loss",
+        event_type="manual",
+        event_severity=payload.severity,
+        event_description=f"Temporary manual claim created by worker (severity: {payload.severity})",
+        status="approved",
+        payout_amount_inr=payout_amount,
+        fraud_flag=None,
+        triggered_at=datetime.now(timezone.utc),
+    )
+
+    db.add(claim)
+    await db.flush()
+
+    payout = Payout(
+        claim_id=claim.id,
+        worker_id=current_worker.id,
+        amount_inr=payout_amount,
+        status="pending",
+        transaction_id=None,
+        payment_method="upi",
+        processed_at=None,
+    )
+    db.add(payout)
+
+    await db.commit()
+    await db.refresh(claim)
+    return claim
 
 
 @router.get(

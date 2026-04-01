@@ -154,3 +154,7 @@ export type EventTriggerResponse = {
   claims_created: number
   claim_ids: string[]
 }
+
+export type ManualClaimPayload = {
+  severity: 'low' | 'medium' | 'high' | 'critical'
+}
