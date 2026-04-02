@@ -30,7 +30,35 @@ async def get_my_payouts(
     db: AsyncSession = Depends(get_db),
     current_worker: Worker = Depends(get_current_worker),
 ) -> list[Payout]:
-    """Return all payouts (pending, processed, failed) for the worker."""
+    """Return all payouts (pending, processed, failed) for the worker.
+
+    Temporary behavior: ensure approved claims have a visible payout record
+    even if disbursement has not been processed yet.
+    """
+    approved_claims_without_payout = await db.execute(
+        select(Claim).where(
+            Claim.worker_id == current_worker.id,
+            Claim.status == "approved",
+            ~Claim.payout.has(),
+        )
+    )
+    missing_claims = list(approved_claims_without_payout.scalars().all())
+
+    if missing_claims:
+        for claim in missing_claims:
+            db.add(
+                Payout(
+                    claim_id=claim.id,
+                    worker_id=current_worker.id,
+                    amount_inr=claim.payout_amount_inr,
+                    status="pending",
+                    transaction_id=None,
+                    payment_method="upi",
+                    processed_at=None,
+                )
+            )
+        await db.flush()
+
     result = await db.execute(
         select(Payout)
         .where(Payout.worker_id == current_worker.id)
