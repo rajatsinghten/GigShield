@@ -111,7 +111,12 @@ export function WorkerDashboardPage() {
   const potentialPayout = Math.round(data?.income_protected_this_week ?? 0)
 
   return (
-    <AppShell mode="worker" title="Home" subtitle="Your safety check for today.">
+    <AppShell
+      mode="worker"
+      title="Home"
+      subtitle="Your safety check for today."
+      bannerTone="emerald"
+    >
       <div className="mx-auto w-full max-w-xl space-y-4 pb-24 md:max-w-2xl md:pb-28">
         {loading && <LoadingSkeleton lines={5} />}
         {!loading && error && <RetryPanel title="Unable to load home" message={error} onRetry={() => void load()} />}
@@ -162,17 +167,6 @@ export function WorkerDashboardPage() {
               No forms. No claims. Money sent automatically.
             </section>
 
-            <div className="fixed inset-x-0 bottom-[4.75rem] z-30 px-3 md:bottom-5 md:px-6">
-              <div className="mx-auto w-full max-w-xl md:max-w-2xl">
-                <button
-                  type="button"
-                  onClick={() => navigate(ROUTES.policies)}
-                  className="w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-base font-semibold text-white shadow-lg transition hover:bg-slate-800"
-                >
-                  {isProtectedToday ? 'Manage Protection' : 'Start Protection'}
-                </button>
-              </div>
-            </div>
           </>
         )}
       </div>

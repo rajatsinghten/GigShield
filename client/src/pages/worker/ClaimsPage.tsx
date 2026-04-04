@@ -67,10 +67,13 @@ export function ClaimsPage() {
   }, [claims, page])
 
   return (
-    <AppShell mode="worker" title="Support History" subtitle="See when we sent help money.">
-      <section className="mb-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
-        <p className="text-sm font-semibold text-amber-900">If work slows, help appears here fast.</p>
-      </section>
+    <AppShell
+      mode="worker"
+      title="Support History"
+      subtitle="See when we sent help money."
+      bannerText="If work slows, help appears here fast."
+      bannerTone="amber"
+    >
       {showManualTools && (
         <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
