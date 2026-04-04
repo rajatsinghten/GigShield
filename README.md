@@ -214,43 +214,121 @@ worker_rating_history → LSTM trajectory model
 
 - **Python 3.11+**
 - **Docker & Docker Compose**
-- **pip** (or Poetry)
+- **Node.js 20+**
+- **pip**
+
+### Project Layout Note
+
+- Frontend app is in `client/`
+- FastAPI backend is in `server/`
 
 ### 1. Clone & Install
 
 ```bash
-cd gigshield
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+cd Guidewire
+python3 -m venv server/.venv
+source server/.venv/bin/activate
+pip install -r server/requirements.txt
+cd client && npm ci && cd ..
 ```
 
 ### 2. Start PostgreSQL
 
 ```bash
-docker-compose up -d
+docker compose -f server/docker-compose.yml up -d postgres
 ```
 
 ### 3. Configure Environment
 
 ```bash
-cp .env.example .env
-# Edit .env with your settings (defaults work for local dev)
+cp server/.env.example server/.env
+# Edit server/.env with your settings (defaults work for local dev)
 ```
 
 ### 4. Run Migrations
 
 ```bash
+cd server
+source .venv/bin/activate
 alembic upgrade head
 ```
 
 ### 5. Start Server
 
 ```bash
+cd server
+source .venv/bin/activate
 uvicorn app.main:app --reload
 ```
 
 API docs available at: **http://localhost:8000/docs**
+
+---
+
+## Cross-Platform Integration Testing
+
+These scripts run setup + full verification for backend and frontend.
+
+### Included Checks
+
+- Backend pytest suite (`server/tests`)
+- Real ML inference call through `server/app/services/severity_prediction.py`
+- Backend health smoke check (`GET /health` via in-process ASGI client)
+- Frontend lint (`npm run lint`)
+- Frontend build (`npm run build`)
+- Optional Docker/Postgres startup check
+
+### macOS / Linux (One Command)
+
+```bash
+bash scripts/setup-and-test.sh
+```
+
+Skip optional Docker check:
+
+```bash
+SKIP_DOCKER_CHECK=1 bash scripts/setup-and-test.sh
+```
+
+### Windows PowerShell (One Command)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-and-test.ps1
+```
+
+Skip optional Docker check:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-and-test.ps1 -SkipDockerCheck
+```
+
+### Preflight Only
+
+macOS/Linux:
+
+```bash
+bash scripts/preflight.sh
+```
+
+Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\preflight.ps1
+```
+
+### Fresh Laptop Notes
+
+- Frontend Node version is pinned in `client/.nvmrc`.
+- Frontend env template is available at `client/.env.example`.
+- Backend env template is available at `server/.env.example`.
+- Model artifacts must exist for full ML integration validation:
+      - `notebooks/xg_bost.pkl`
+      - `data/processed/gigshield_training_ready.csv`
+- If ML runtime check fails on macOS with `libomp.dylib` error, install OpenMP:
+
+```bash
+brew install libomp
+```
 
 ---
 

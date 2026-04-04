@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { apiClient } from '../../lib/apiClient'
@@ -17,7 +17,7 @@ export function ClaimDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError('')
     setLoading(true)
     try {
@@ -27,11 +27,11 @@ export function ClaimDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     void load()
-  }, [id])
+  }, [load])
 
   return (
     <AppShell mode="worker" title="Support Details" subtitle="Check status and money updates.">
