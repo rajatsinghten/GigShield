@@ -197,21 +197,7 @@ The backend isn't just a static API; it is an active disruption monitoring syste
 
 ---
 
-## Current Phase Scope
 
-### Phase 1 - Seed
-
-- FastAPI scaffold with core insurance and verification endpoints
-- SQLAlchemy models with Alembic migration support
-- Three-factor pricing engine
-- Event trigger to auto-claim pipeline
-- Mock external APIs (weather/platform/payment)
-- JWT auth with OTP stub
-- Worker and admin dashboard endpoints
-- APScheduler-based weekly premium burn simulation
-- Docker Compose with PostgreSQL
-
----
 
 ## Setup Instructions
 
